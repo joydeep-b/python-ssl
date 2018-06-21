@@ -1,6 +1,7 @@
 import socket
 import struct
 import sys
+import protogen.proto.referee_pb2 as referee_pb2
 
 multicast_group = '224.5.23.1'
 server_address = ('', 10003)
@@ -21,12 +22,16 @@ mreq = struct.pack('4sL', group, socket.INADDR_ANY)
 sock.setsockopt(socket.IPPROTO_IP, socket.IP_ADD_MEMBERSHIP, mreq)
 
 # Receive/respond loop
+ref_msg = referee_pb2.SSL_Referee()
 while True:
-    print >>sys.stderr, '\nwaiting to receive message'
+    # print >>sys.stderr, '\nwaiting to receive message'
     data, address = sock.recvfrom(1024)
-    
-    print >>sys.stderr, 'received %s bytes from %s' % (len(data), address)
-    print >>sys.stderr, data
+    ref_msg.ParseFromString(data)
+    print '%d: %s' % (ref_msg.packet_timestamp,
+            ref_msg.command)
+    print referee_pb2._SSL_REFEREE_COMMAND.values_by_number[ref_msg.command].name
+    # print >>sys.stderr, 'received %s bytes from %s' % (len(data), address)
+    # print >>sys.stderr, data
 
-    print >>sys.stderr, 'sending acknowledgement to', address
+    # print >>sys.stderr, 'sending acknowledgement to', address
     sock.sendto('ack', address)
